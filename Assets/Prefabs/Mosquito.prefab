@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 5343027431124298774}
   m_Layer: 0
   m_Name: Mosquito
-  m_TagString: Untagged
+  m_TagString: enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -81,7 +81,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_MaskInteraction: 0
   m_Sprite: {fileID: 4959550669393256474, guid: 8c4f9197f7aba984e861f7d27c6bd6dd, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -152,10 +152,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3bd1ef00267458a4d9c2174b23cddb38, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mosquito
-  minFlySpeed: 1.8
-  maxFlySpeed: 4.5
-  acceleration: 5
-  directionChangeInterval: 0.25
-  wobbleStrength: 1.2
-  arrivalDistance: 0.15
-  attackDuration: 3
+  state: 0
+  flySpeed: 3
+  wobbleAmount: 0.5
+  wobbleSpeed: 3
+  canPierce: 1
+  pierceChance: 0.119
+  minFlyTimeBeforePierce: 2
+  pierceCooldown: 6
+  pierceDuration: 3
+  pierceDamage: 1
+  maxPiercingAtOnce: 1
+  dieAfterPierce: 0
+  warningPrefab: {fileID: 0}
+  warningOffset: {x: 0, y: 0.8, z: 0}
+  warningScale: 0.6
+  pulseSpeed: 8
+  pulseAmount: 0.15
