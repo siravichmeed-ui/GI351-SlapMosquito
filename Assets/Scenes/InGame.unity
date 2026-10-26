@@ -1179,7 +1179,7 @@ GameObject:
   - component: {fileID: 821190197}
   - component: {fileID: 821190196}
   m_Layer: 0
-  m_Name: Gemini_Generated_Image_lcxp9tlcxp9tlcxp_0
+  m_Name: BG
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1256,6 +1256,52 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0.11, y: 0.0207, z: 0}
   m_LocalScale: {x: 1.3010154, y: 1.3010154, z: 1.3010154}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &830545420
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 830545422}
+  - component: {fileID: 830545421}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &830545421
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 830545420}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c952e0d9b7b2d5e4ab42726e715a3734, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EquipmentManager
+  startingTool: 0
+  tapeRepairAmount: 1
+--- !u!4 &830545422
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 830545420}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.0333, y: 0.0066, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -2153,7 +2199,7 @@ GameObject:
   - component: {fileID: 1578091701}
   - component: {fileID: 1578091702}
   m_Layer: 0
-  m_Name: 1b983c01-7987-4314-a287-f908985d9c1e-Photoroom_0
+  m_Name: BG Glass
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2248,15 +2294,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BreakableGlass
   maxHP: 5
   damagePerClick: 1
-  crackStages:
-  - sprite: {fileID: 5842630367150095500, guid: eac6a1f7fb6dd6442be7ce1d3411333a, type: 3}
-    showWhenHPAtOrBelow: 4
-  - sprite: {fileID: -889832015632683177, guid: 2f5cf8ca1b52afb4d90064a069fe67ba, type: 3}
-    showWhenHPAtOrBelow: 3
-  - sprite: {fileID: 906997432504936578, guid: 86cc688b623198141b1b18d74af37046, type: 3}
-    showWhenHPAtOrBelow: 2
-  - sprite: {fileID: -4778899992197692158, guid: 63948e9fa6b05a1458b5fa55f3a7a150, type: 3}
-    showWhenHPAtOrBelow: 1
+  crackStages: []
   spawnCrackOnHit: 1
   crackDecals: []
   decalSizeRange: {x: 1, y: 1.8}
@@ -2267,6 +2305,7 @@ MonoBehaviour:
   destroyOnBreak: 1
   setGlassDepth: 1
   glassZ: 1
+  repairDuration: 1.5
   onHit:
     m_PersistentCalls:
       m_Calls: []
@@ -2894,6 +2933,52 @@ RectTransform:
   m_AnchoredPosition: {x: -5, y: 0}
   m_SizeDelta: {x: -20, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &1899996203
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1899996205}
+  - component: {fileID: 1899996204}
+  m_Layer: 0
+  m_Name: RepairProgressManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1899996204
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1899996203}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 598ace4e2433d0746bef60e5ef18bfd5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RepairProgressUI
+  repairProgressPrefab: {fileID: 2021299648754004523, guid: b5ad7984240e68244ae4d61c5ba8596c, type: 3}
+  mouseOffset: {x: 0, y: 0}
+--- !u!4 &1899996205
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1899996203}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 929.44214, y: 536.1667, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1988027672
 GameObject:
   m_ObjectHideFlags: 0
@@ -3300,3 +3385,5 @@ SceneRoots:
   - {fileID: 386231533}
   - {fileID: 1578091700}
   - {fileID: 821190197}
+  - {fileID: 830545422}
+  - {fileID: 1899996205}

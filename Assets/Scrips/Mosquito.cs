@@ -399,8 +399,20 @@ public class Mosquito : MonoBehaviour
 
     private void OnMouseDown()
     {
+        // ถ้ายุงตายแล้ว ไม่ต้องทำอะไร
         if (alreadyHit || state == MosquitoState.Dead)
             return;
+
+        // ห้ามตีระหว่าง Slot Event หรือ Popup
+        if (BreakableGlass.InputBlocked)
+            return;
+
+        // ต้องเลือกไม้ตียุงด้วยปุ่ม 1 เท่านั้น
+        if (EquipmentManager.SelectedTool !=
+            EquipmentManager.ToolType.FlySwatter)
+        {
+            return;
+        }
 
         alreadyHit = true;
         state = MosquitoState.Dead;
@@ -408,7 +420,7 @@ public class Mosquito : MonoBehaviour
         ReleasePiercer();
         HideWarning();
 
-        // เพิ่มคะแนนและ Combo เมื่อคลิกโดนยุง
+        // เพิ่มคะแนนและ Combo ด้วยระบบเดิม
         if (ComboScoreManager.Instance != null)
         {
             ComboScoreManager.Instance.RegisterMosquitoHit();
@@ -418,7 +430,7 @@ public class Mosquito : MonoBehaviour
             Debug.LogError("ไม่พบ ComboScoreManager ใน Scene!");
         }
 
-        // เปิด Slot Event เมื่อเป็นยุงพิเศษ
+        // เปิด Slot Event เมื่อกำจัดยุงพิเศษ
         if (isSpecial && SlotEventManager.Instance != null)
         {
             SlotEventManager.Instance.OpenEvent();
@@ -426,7 +438,6 @@ public class Mosquito : MonoBehaviour
 
         Destroy(gameObject);
     }
-
     private void OnDestroy()
     {
         ReleasePiercer();
