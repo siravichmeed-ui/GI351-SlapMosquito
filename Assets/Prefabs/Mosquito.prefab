@@ -169,11 +169,14 @@ MonoBehaviour:
   pierceDamage: 1
   maxPiercingAtOnce: 1
   dieAfterPierce: 0
+  globalPierceCooldown: 4
+  onlyPierceWhenOnScreen: 1
   warningPrefab: {fileID: 0}
   warningOffset: {x: 0, y: 0.8, z: 0}
   warningScale: 0.6
   pulseSpeed: 8
   pulseAmount: 0.15
+  flyArea: {fileID: 0}
 --- !u!95 &3213268332833436495
 Animator:
   serializedVersion: 7

@@ -1,4 +1,3 @@
-
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -62,6 +61,9 @@ public class SlotEventManager : MonoBehaviour
     {
         FindLeverController();
 
+        // เริ่มเกมโดยอนุญาตให้คลิกยุงและกระจก
+        SetGameInputBlocked(false);
+
         if (slotPanel != null)
             slotPanel.SetActive(false);
 
@@ -89,6 +91,12 @@ public class SlotEventManager : MonoBehaviour
         }
     }
 
+    // ล็อกหรือปลดล็อกการคลิกภายในเกม
+    private void SetGameInputBlocked(bool blocked)
+    {
+        BreakableGlass.InputBlocked = blocked;
+    }
+
     public void OpenEvent()
     {
         if (eventRunning)
@@ -98,6 +106,9 @@ public class SlotEventManager : MonoBehaviour
 
         eventRunning = true;
         spinning = false;
+
+        // ล็อกการตีและคลิกวัตถุในเกมทันทีที่เปิด Slot
+        SetGameInputBlocked(true);
 
         previousTimeScale = Time.timeScale;
         Time.timeScale = 0f;
@@ -111,10 +122,9 @@ public class SlotEventManager : MonoBehaviour
         if (resultText != null)
             resultText.text = "PULL THE LEVER!";
 
-        // เปิดและรีเซ็ต Slider สำหรับ Event รอบใหม่
         SetLeverEnabled(true);
 
-        Debug.Log("Slot Event เปิดแล้ว");
+        Debug.Log("Slot Event เปิดแล้ว: ล็อกการตีและคลิกในเกม");
     }
 
     public void PullLever()
@@ -153,30 +163,30 @@ public class SlotEventManager : MonoBehaviour
         if (resultText != null)
             resultText.text = "SPINNING...";
 
-        // สุ่มผลสล็อตทั้งสามช่อง
+        // สุ่มผลลัพธ์ของแต่ละช่องล่วงหน้า
         result1 = symbols[Random.Range(0, symbols.Length)];
         result2 = symbols[Random.Range(0, symbols.Length)];
         result3 = symbols[Random.Range(0, symbols.Length)];
 
-        // หมุนช่องที่ 1
-        yield return StartCoroutine(
+        // เริ่มหมุนทั้ง 3 ช่องพร้อมกัน
+        Coroutine reel1Routine = StartCoroutine(
             SpinReel(reel1, result1, spinDuration)
         );
 
-        yield return new WaitForSecondsRealtime(stopDelay);
-
-        // หมุนช่องที่ 2
-        yield return StartCoroutine(
-            SpinReel(reel2, result2, spinDuration)
+        Coroutine reel2Routine = StartCoroutine(
+            SpinReel(reel2, result2, spinDuration + stopDelay)
         );
 
-        yield return new WaitForSecondsRealtime(stopDelay);
-
-        // หมุนช่องที่ 3
-        yield return StartCoroutine(
-            SpinReel(reel3, result3, spinDuration)
+        Coroutine reel3Routine = StartCoroutine(
+            SpinReel(reel3, result3, spinDuration + stopDelay * 2f)
         );
 
+        // รอจนกว่าทั้ง 3 ช่องจะหมุนเสร็จ
+        yield return reel1Routine;
+        yield return reel2Routine;
+        yield return reel3Routine;
+
+        // แสดงผลเมื่อทุกช่องหยุดแล้วเท่านั้น
         ShowResult();
 
         spinning = false;
@@ -208,13 +218,15 @@ public class SlotEventManager : MonoBehaviour
             {
                 timer = 0f;
 
-                reel.sprite =
-                    symbols[Random.Range(0, symbols.Length)];
+                reel.sprite = symbols[
+                    Random.Range(0, symbols.Length)
+                ];
             }
 
             yield return null;
         }
 
+        // กำหนดภาพผลลัพธ์สุดท้าย
         reel.sprite = finalSprite;
     }
 
@@ -254,7 +266,6 @@ public class SlotEventManager : MonoBehaviour
         eventRunning = false;
         spinning = false;
 
-        // ปิด Slider และรีเซ็ตสถานะ
         SetLeverEnabled(false);
 
         if (slotPanel != null)
@@ -263,10 +274,13 @@ public class SlotEventManager : MonoBehaviour
         if (continueButton != null)
             continueButton.gameObject.SetActive(false);
 
-        // คืนความเร็วเกมก่อนเข้า Event
+        // คืนความเร็วเกม
         Time.timeScale = previousTimeScale;
 
-        Debug.Log("Slot Event จบแล้ว สามารถเปิด Event รอบใหม่ได้");
+        // ปลดล็อกให้กลับมาตียุงและกระจกได้
+        SetGameInputBlocked(false);
+
+        Debug.Log("Slot Event จบแล้ว: ปลดล็อกการตีและคลิกในเกม");
     }
 
     private void SetLeverEnabled(bool isEnabled)
@@ -294,6 +308,9 @@ public class SlotEventManager : MonoBehaviour
     {
         if (Instance == this)
         {
+            // ป้องกันสถานะล็อกค้างหาก Manager ถูกทำลาย
+            SetGameInputBlocked(false);
+
             Time.timeScale = previousTimeScale;
             Instance = null;
         }

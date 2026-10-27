@@ -44,7 +44,7 @@ public class Mosquito : MonoBehaviour
     public int maxPiercingAtOnce = 1;
     public bool dieAfterPierce = false;
 
-    [Tooltip("หลังมียุงเจาะเสร็จหรือถูกตี ยุงตัวอื่นต้องรอกี่วินาทีถึงจะเจาะได้ (กันยุงตัวใหม่โผล่มาเจาะต่อทันที)")]
+    [Tooltip("หลังมียุงเจาะเสร็จหรือถูกตี ยุงตัวอื่นต้องรอกี่วินาทีถึงจะเจาะได้")]
     public float globalPierceCooldown = 4f;
 
     [Tooltip("เจาะได้เฉพาะตอนยุงอยู่ในจอ")]
@@ -76,10 +76,25 @@ public class Mosquito : MonoBehaviour
     private static int activePiercers;
     private static float nextGlobalPierceTime;
 
-    // ส่งสัญญาณทุกครั้งที่ยุงถูกตี (BossSpawner ใช้นับจำนวนที่ฆ่า)
-    public static event System.Action OnMosquitoKilled;
+    [Header("Fly Boundary")]
+    public BoxCollider2D flyArea;
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private void FindFlyArea()
+    {
+        if (flyArea == null)
+        {
+            GameObject area = GameObject.Find("MosquitoFlyArea");
+
+            if (area != null)
+                flyArea = area.GetComponent<BoxCollider2D>();
+        }
+    }
+
+    // ส่งสัญญาณทุกครั้งที่ยุงธรรมดาถูกตี
+    public static event System.Action<Mosquito> OnMosquitoKilled;
+
+    [RuntimeInitializeOnLoadMethod(
+        RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetStatics()
     {
         activePiercers = 0;
@@ -98,11 +113,16 @@ public class Mosquito : MonoBehaviour
 
     private void Start()
     {
+        FindFlyArea();
         PickNewTarget();
     }
 
     private void Update()
     {
+        // ห้ามระบบยุงธรรมดาทำงานกับบอส
+        if (GetComponent<BossMosquito>() != null)
+            return;
+
         if (state == MosquitoState.Dead)
             return;
 
@@ -121,20 +141,64 @@ public class Mosquito : MonoBehaviour
 
     private void FlyAround()
     {
+        // ภาพต้นฉบับหันซ้าย
+        if (targetPosition.x < transform.position.x)
+        {
+            transform.localScale = new Vector3(
+                Mathf.Abs(transform.localScale.x),
+                transform.localScale.y,
+                transform.localScale.z
+            );
+        }
+        else if (targetPosition.x > transform.position.x)
+        {
+            // บินขวา กลับภาพ
+            transform.localScale = new Vector3(
+                -Mathf.Abs(transform.localScale.x),
+                transform.localScale.y,
+                transform.localScale.z
+            );
+        }
+
+        // เคลื่อนที่ไปยังเป้าหมาย
         transform.position = Vector3.MoveTowards(
             transform.position,
             targetPosition,
             flySpeed * Time.deltaTime
         );
 
-        float wobble =
-            Mathf.Sin((Time.time + randomOffset) * wobbleSpeed)
-            * wobbleAmount;
+        // ขยับขึ้นลงขณะบิน
+        float wobble = Mathf.Sin(
+            (Time.time + randomOffset) * wobbleSpeed
+        ) * wobbleAmount;
 
         Vector3 pos = transform.position;
         pos.y += wobble * Time.deltaTime;
         transform.position = pos;
 
+        // จำกัดพื้นที่บิน
+        if (flyArea != null)
+        {
+            Bounds bounds = GetFlyBounds();
+
+            pos = transform.position;
+
+            pos.x = Mathf.Clamp(
+                pos.x,
+                bounds.min.x,
+                bounds.max.x
+            );
+
+            pos.y = Mathf.Clamp(
+                pos.y,
+                bounds.min.y,
+                bounds.max.y
+            );
+
+            transform.position = pos;
+        }
+
+        // ตรวจสอบการเจาะกระจกเมื่อถึงเป้าหมาย
         if (Vector3.Distance(transform.position, targetPosition) < 0.2f)
         {
             if (!TryStartPierce())
@@ -142,8 +206,58 @@ public class Mosquito : MonoBehaviour
         }
     }
 
+    private Bounds GetFlyBounds()
+    {
+        Bounds bounds = flyArea.bounds;
+
+        // เว้นระยะขอบตามขนาดของยุง
+        if (spriteRenderer != null)
+        {
+            Vector3 extents = spriteRenderer.bounds.extents;
+
+            float minX = bounds.min.x + extents.x;
+            float maxX = bounds.max.x - extents.x;
+            float minY = bounds.min.y + extents.y;
+            float maxY = bounds.max.y - extents.y;
+
+            if (minX > maxX)
+            {
+                minX = bounds.center.x;
+                maxX = bounds.center.x;
+            }
+
+            if (minY > maxY)
+            {
+                minY = bounds.center.y;
+                maxY = bounds.center.y;
+            }
+
+            bounds.SetMinMax(
+                new Vector3(minX, minY, bounds.min.z),
+                new Vector3(maxX, maxY, bounds.max.z)
+            );
+        }
+
+        return bounds;
+    }
+
     private void PickNewTarget()
     {
+        // ถ้ากำหนดกรอบบินไว้ ให้สุ่มเป้าหมายภายในกรอบ
+        if (flyArea != null)
+        {
+            Bounds bounds = GetFlyBounds();
+
+            targetPosition = new Vector3(
+                Random.Range(bounds.min.x, bounds.max.x),
+                Random.Range(bounds.min.y, bounds.max.y),
+                transform.position.z
+            );
+
+            return;
+        }
+
+        // ถ้าไม่ได้กำหนดกรอบ ให้ใช้พื้นที่กล้อง
         Camera cam = Camera.main;
 
         if (cam == null)
@@ -180,11 +294,9 @@ public class Mosquito : MonoBehaviour
 
         if (flyTimer < minFlyTimeBeforePierce ||
             Time.time < nextPierceTime)
-        {
             return false;
-        }
 
-        // คูลดาวน์รวม: เพิ่งมียุงเจาะเสร็จ/ถูกตี ยังห้ามตัวอื่นเจาะต่อทันที
+        // คูลดาวน์รวม
         if (Time.time < nextGlobalPierceTime)
             return false;
 
@@ -340,7 +452,7 @@ public class Mosquito : MonoBehaviour
         activePiercers = Mathf.Max(0, activePiercers - 1);
         countedAsPiercer = false;
 
-        // เริ่มคูลดาวน์รวม ไม่ให้ตัวอื่นเจาะต่อทันที
+        // เริ่มคูลดาวน์รวม
         nextGlobalPierceTime = Time.time + globalPierceCooldown;
     }
 
@@ -523,6 +635,16 @@ public class Mosquito : MonoBehaviour
 
     private void OnMouseDown()
     {
+        // สำคัญ: ถ้ามี BossMosquito อยู่ ห้ามใช้ระบบยุงธรรมดา
+        if (GetComponent<BossMosquito>() != null)
+            return;
+
+        if (SlotEventManager.Instance != null &&
+            SlotEventManager.Instance.IsEventRunning)
+        {
+            return;
+        }
+
         if (alreadyHit || state == MosquitoState.Dead)
             return;
 
@@ -537,23 +659,11 @@ public class Mosquito : MonoBehaviour
 
         alreadyHit = true;
 
-        // แจ้ง BossSpawner ว่ามียุงถูกตี
-        OnMosquitoKilled?.Invoke();
+        // แจ้ง BossSpawner ว่ามียุงธรรมดาถูกตี
+        OnMosquitoKilled?.Invoke(this);
 
         // เล่น Animation ตายก่อนลบ GameObject
         PlayDeadAnimation();
-
-        // เพิ่มคะแนนและ Combo
-        if (ComboScoreManager.Instance != null)
-        {
-            ComboScoreManager.Instance.RegisterMosquitoHit();
-        }
-        else
-        {
-            Debug.LogError(
-                "ไม่พบ ComboScoreManager ใน Scene!"
-            );
-        }
 
         // เปิด Slot Event เมื่อกำจัดยุงพิเศษ
         if (isSpecial &&

@@ -9,32 +9,43 @@ public class BossSettings
 {
     [Header("Boss")]
     [Min(1)] public int maxHP = 50;
+
     [Tooltip("ขนาดเทียบกับยุงธรรมดา (ขนาดของ Prefab)")]
     public float scaleMultiplier = 15f;
+
     public float flySpeed = 2f;
+
     [Tooltip("ห่างจากขอบจอ (Viewport 0-0.5) ที่บอสจะไม่บินเกินเข้าไป")]
-    [Range(0f, 0.5f)] public float screenMargin = 0.1f;
+    [Range(0f, 0.5f)]
+    public float screenMargin = 0.1f;
 
     [Header("Summon (เรียกลูกน้อง)")]
-    [Min(1)] public int minionsPerWave = 5;
+    [Min(1)]
+    public int minionsPerWave = 5;
+
     [Tooltip("ลูกน้องบินเร็วกว่ายุงธรรมดากี่เท่า")]
     public float minionSpeedMultiplier = 1.8f;
+
     [Tooltip("หน่วงหลังลูกน้องชุดเก่าหมด ก่อนเรียกชุดใหม่ (วินาที)")]
     public float summonDelay = 1.0f;
+
     public float firstSummonDelay = 1.5f;
+
     [Tooltip("ระยะที่ลูกน้องโผล่ ห่างจากกลางตัวบอส (เทียบกับขนาดตัวบอส)")]
     public float spawnRadiusFactor = 0.5f;
 
     [Header("Hit Flash (โดนตีแล้วแดงกระพริบ)")]
     public Color flashColor = Color.red;
-    [Min(1)] public int flashCount = 3;
+
+    [Min(1)]
+    public int flashCount = 3;
+
     public float flashInterval = 0.06f;
 
     [Header("Defeat")]
     public float deadDuration = 1f;
+
     public bool killMinionsOnDeath = true;
-    [Tooltip("เรียก RegisterMosquitoHit กี่ครั้งตอนบอสตาย (ให้คะแนน/คอมโบ)")]
-    [Min(0)] public int scoreHitsOnDefeat = 5;
 }
 
 public class BossMosquito : MonoBehaviour
@@ -56,6 +67,7 @@ public class BossMosquito : MonoBehaviour
     private Coroutine flashRoutine;
 
     private readonly List<Mosquito> minions = new List<Mosquito>();
+
     private bool hadMinions;
     private float nextSummonTime;
 
@@ -220,10 +232,19 @@ public class BossMosquito : MonoBehaviour
         if (isDead)
             return;
 
+        // เพิ่ม Combo และคะแนนเมื่อโจมตีบอสโดน
+        if (ComboManager.Instance != null)
+        {
+            ComboManager.Instance.RegisterBossHit(this);
+        }
+
+        // ลด HP บอสตามระบบเดิม
         currentHP--;
 
+        // เอฟเฟกต์กระพริบเมื่อถูกตี
         PlayFlash();
 
+        // ตรวจสอบว่าบอสตายหรือยัง
         if (currentHP <= 0)
             Die();
     }
@@ -273,12 +294,6 @@ public class BossMosquito : MonoBehaviour
         }
 
         minions.Clear();
-
-        if (ComboScoreManager.Instance != null)
-        {
-            for (int i = 0; i < s.scoreHitsOnDefeat; i++)
-                ComboScoreManager.Instance.RegisterMosquitoHit();
-        }
 
         TrySetTrigger("Dead");
 
