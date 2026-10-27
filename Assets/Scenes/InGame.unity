@@ -3441,8 +3441,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossSpawner
   mosquitoPrefab: {fileID: 2698664700555414104, guid: f2e7fae77abda7445a5f233d7b2ffa7e, type: 3}
-  minKillsToSpawnBoss: 30
-  maxKillsToSpawnBoss: 40
+  minKillsToSpawnBoss: 1
+  maxKillsToSpawnBoss: 1
   repeatBoss: 1
   spawnViewportX: 0.5
   spawnViewportY: 0.65

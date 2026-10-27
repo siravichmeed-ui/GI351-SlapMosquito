@@ -66,6 +66,14 @@ public class BossMosquito : MonoBehaviour
     private Color originalColor;
     private Coroutine flashRoutine;
 
+    [Header("Fly Area")]
+    public BoxCollider2D flyArea;
+
+    [Header("Flight Animation")]
+    public float wobbleAmount = 0.15f;
+    public float wobbleSpeed = 3f;
+
+    private float randomOffset;
     private readonly List<Mosquito> minions = new List<Mosquito>();
 
     private bool hadMinions;
@@ -90,13 +98,26 @@ public class BossMosquito : MonoBehaviour
         currentHP = s.maxHP;
         transform.localScale *= s.scaleMultiplier;
 
+        randomOffset = Random.Range(0f, 100f);
+
+        FindFlyArea();
+
         if (sr != null)
             originalColor = sr.color;
 
         nextSummonTime = Time.time + s.firstSummonDelay;
         PickNewTarget();
     }
+    private void FindFlyArea()
+    {
+        if (flyArea != null)
+            return;
 
+        GameObject area = GameObject.Find("MosquitoFlyArea");
+
+        if (area != null)
+            flyArea = area.GetComponent<BoxCollider2D>();
+    }
     private void Update()
     {
         if (isDead || s == null)
@@ -110,18 +131,128 @@ public class BossMosquito : MonoBehaviour
 
     private void Fly()
     {
+        // หันหน้าตามทิศทางบิน
+        // สมมติว่าภาพต้นฉบับหันซ้าย และ Scale X เป็นบวก
+        // ถ้าบินขวา ให้กลับภาพด้วย Scale X ติดลบ
+
+        if (targetPosition.x < transform.position.x)
+        {
+            transform.localScale = new Vector3(
+                Mathf.Abs(transform.localScale.x),
+                transform.localScale.y,
+                transform.localScale.z
+            );
+        }
+        else if (targetPosition.x > transform.position.x)
+        {
+            transform.localScale = new Vector3(
+                -Mathf.Abs(transform.localScale.x),
+                transform.localScale.y,
+                transform.localScale.z
+            );
+        }
+
+        // บินไปยังจุดหมาย
         transform.position = Vector3.MoveTowards(
             transform.position,
             targetPosition,
             s.flySpeed * Time.deltaTime
         );
 
-        if (Vector3.Distance(transform.position, targetPosition) < 0.3f)
+        // ขยับขึ้นลงเล็กน้อยขณะบิน
+        float wobble = Mathf.Sin(
+            (Time.time + randomOffset) * wobbleSpeed
+        ) * wobbleAmount;
+
+        Vector3 pos = transform.position;
+        pos.y += wobble * Time.deltaTime;
+        transform.position = pos;
+
+        // จำกัดพื้นที่บิน
+        if (flyArea != null)
+        {
+            Bounds bounds = GetFlyBounds();
+
+            pos = transform.position;
+
+            pos.x = Mathf.Clamp(
+                pos.x,
+                bounds.min.x,
+                bounds.max.x
+            );
+
+            pos.y = Mathf.Clamp(
+                pos.y,
+                bounds.min.y,
+                bounds.max.y
+            );
+
+            transform.position = pos;
+        }
+
+        // เมื่อถึงจุดหมาย ให้สุ่มจุดใหม่
+        if (Vector3.Distance(
+            transform.position,
+            targetPosition
+        ) < 0.2f)
+        {
             PickNewTarget();
+        }
+    }
+
+    private Bounds GetFlyBounds()
+    {
+        Bounds bounds = flyArea.bounds;
+
+        if (sr != null)
+        {
+            Vector3 extents = sr.bounds.extents;
+
+            float minX = bounds.min.x + extents.x;
+            float maxX = bounds.max.x - extents.x;
+
+            float minY = bounds.min.y + extents.y;
+            float maxY = bounds.max.y - extents.y;
+
+            // ป้องกันกรณีบอสตัวใหญ่กว่าพื้นที่บิน
+            if (minX > maxX)
+            {
+                minX = bounds.center.x;
+                maxX = bounds.center.x;
+            }
+
+            if (minY > maxY)
+            {
+                minY = bounds.center.y;
+                maxY = bounds.center.y;
+            }
+
+            bounds.SetMinMax(
+                new Vector3(minX, minY, bounds.min.z),
+                new Vector3(maxX, maxY, bounds.max.z)
+            );
+        }
+
+        return bounds;
     }
 
     private void PickNewTarget()
     {
+        // ถ้ามี Fly Area ให้สุ่มเป้าหมายภายในกรอบ
+        if (flyArea != null)
+        {
+            Bounds bounds = GetFlyBounds();
+
+            targetPosition = new Vector3(
+                Random.Range(bounds.min.x, bounds.max.x),
+                Random.Range(bounds.min.y, bounds.max.y),
+                transform.position.z
+            );
+
+            return;
+        }
+
+        // หากหา Fly Area ไม่พบ ให้ใช้พื้นที่กล้องแทน
         Camera cam = Camera.main;
 
         if (cam == null)
@@ -135,11 +266,19 @@ public class BossMosquito : MonoBehaviour
         );
 
         Vector3 min = cam.ViewportToWorldPoint(
-            new Vector3(s.screenMargin, s.screenMargin, distance)
+            new Vector3(
+                s.screenMargin,
+                s.screenMargin,
+                distance
+            )
         );
 
         Vector3 max = cam.ViewportToWorldPoint(
-            new Vector3(1f - s.screenMargin, 1f - s.screenMargin, distance)
+            new Vector3(
+                1f - s.screenMargin,
+                1f - s.screenMargin,
+                distance
+            )
         );
 
         targetPosition = new Vector3(
