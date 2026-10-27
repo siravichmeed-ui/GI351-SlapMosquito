@@ -66,6 +66,19 @@ public class BreakableGlass : MonoBehaviour
     [Header("Repair Progress")]
     [Min(0.1f)] public float repairDuration = 1.5f;
 
+    [Header("Sound")]
+    [Tooltip("เสียงตอนกระจกโดนตี/โดนเจาะ (ทั้งผู้เล่นคลิกและยุงเจาะ) แต่ยังไม่แตก")]
+    public AudioClip hitSound;
+
+    [Tooltip("เสียงตอนกระจกแตก")]
+    public AudioClip breakSound;
+
+    [Tooltip("เสียงตอนซ่อมรอยแตกสำเร็จ")]
+    public AudioClip repairSound;
+
+    [Range(0f, 1f)]
+    public float soundVolume = 1f;
+
     [Header("Events")]
     public UnityEvent onHit;
     public UnityEvent onBreak;
@@ -273,6 +286,9 @@ public class BreakableGlass : MonoBehaviour
                 // เพิ่ม HP
                 Heal(EquipmentManager.GetRepairAmount());
 
+                // เสียงซ่อมสำเร็จ
+                PlaySound(repairSound);
+
                 Debug.Log(
                     "ซ่อมกระจกสำเร็จ: " +
                     currentHP + "/" + maxHP
@@ -328,6 +344,10 @@ public class BreakableGlass : MonoBehaviour
             SpawnHitShards(worldPoint);
 
         UpdateCrack();
+
+        // ถ้าไม่แตก เล่นเสียงโดนตี (ถ้าแตกจะเล่นเสียงแตกใน BreakGlass แทน)
+        if (currentHP > 0)
+            PlaySound(hitSound);
 
         onHit?.Invoke();
 
@@ -549,6 +569,28 @@ public class BreakableGlass : MonoBehaviour
         }
 
         decals.Clear();
+    }
+
+    // ---------------------------------------------------------
+    // Sound
+    // ---------------------------------------------------------
+
+    // สร้าง AudioSource ชั่วคราวเล่นเสียง
+    // เสียงไม่ขาดแม้กระจกถูก Destroy และเป็นเสียง 2D ไม่เบาตามระยะกล้อง
+    private void PlaySound(AudioClip clip)
+    {
+        if (clip == null)
+            return;
+
+        GameObject go = new GameObject("GlassSFX");
+
+        AudioSource src = go.AddComponent<AudioSource>();
+        src.clip = clip;
+        src.volume = soundVolume;
+        src.spatialBlend = 0f;
+        src.Play();
+
+        Destroy(go, clip.length + 0.1f);
     }
 
     // ---------------------------------------------------------
@@ -914,6 +956,9 @@ public class BreakableGlass : MonoBehaviour
             RepairProgressUI.Instance.Hide();
 
         glassCollider.enabled = false;
+
+        // เสียงกระจกแตก
+        PlaySound(breakSound);
 
         // แตกเป็นเศษ: ซ่อนบานเดิมแล้วปล่อยเศษร่วงลงมา
         if (spawnShardsOnBreak)
