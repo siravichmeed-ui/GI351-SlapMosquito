@@ -12,15 +12,21 @@ public class EquipmentManager : MonoBehaviour
 
     [Header("Equipment Settings")]
     [SerializeField]
-    private ToolType startingTool =
-        ToolType.FlySwatter;
+    private ToolType startingTool = ToolType.FlySwatter;
+
+    [Header("Equipment UI")]
+    [SerializeField]
+    private EquipmentSlotUI flySwatterSlot;
+
+    [SerializeField]
+    private EquipmentSlotUI repairTapeSlot;
 
     [Header("Repair Settings")]
     [Min(1)]
     public int tapeRepairAmount = 1;
 
-    public static ToolType SelectedTool { get; private set; } =
-        ToolType.FlySwatter;
+    public static ToolType SelectedTool { get; private set; }
+        = ToolType.FlySwatter;
 
     private void Awake()
     {
@@ -31,13 +37,21 @@ public class EquipmentManager : MonoBehaviour
         }
 
         Instance = this;
+
         SelectedTool = startingTool;
+    }
+
+    private void Start()
+    {
+        UpdateEquipmentUI();
     }
 
     private void Update()
     {
         if (BreakableGlass.InputBlocked)
+        {
             return;
+        }
 
         // ปุ่ม 1 = ไม้ตียุง
         if (Input.GetKeyDown(KeyCode.Alpha1) ||
@@ -58,6 +72,8 @@ public class EquipmentManager : MonoBehaviour
     {
         SelectedTool = tool;
 
+        UpdateEquipmentUI();
+
         if (tool == ToolType.FlySwatter)
         {
             Debug.Log("เลือกอุปกรณ์: ไม้ตียุง");
@@ -68,11 +84,35 @@ public class EquipmentManager : MonoBehaviour
         }
     }
 
+    private void UpdateEquipmentUI()
+    {
+        // ช่องไม้ตียุง
+        if (flySwatterSlot != null)
+        {
+            flySwatterSlot.SetSelected(
+                SelectedTool == ToolType.FlySwatter
+            );
+        }
+
+        // ช่องเทปซ่อมกระจก
+        if (repairTapeSlot != null)
+        {
+            repairTapeSlot.SetSelected(
+                SelectedTool == ToolType.RepairTape
+            );
+        }
+    }
+
     public static int GetRepairAmount()
     {
         if (Instance == null)
+        {
             return 1;
+        }
 
-        return Mathf.Max(1, Instance.tapeRepairAmount);
+        return Mathf.Max(
+            1,
+            Instance.tapeRepairAmount
+        );
     }
 }

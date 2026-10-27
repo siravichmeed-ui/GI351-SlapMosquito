@@ -1,0 +1,333 @@
+fileFormatVersion: 2
+guid: c20130ad6a082fe4db1d02dee5db765b
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -3297038285628460515
+    second: mos_0
+  - first:
+      213: -7352483233454950087
+    second: mos_1
+  - first:
+      213: -3622670622049981589
+    second: mos_2
+  - first:
+      213: -6398523259655593042
+    second: mos_3
+  - first:
+      213: 2552216271762499101
+    second: mos_4
+  - first:
+      213: -5121639416063288662
+    second: mos_5
+  - first:
+      213: -5973020489884872109
+    second: mos_6
+  - first:
+      213: 7614033307698000070
+    second: mos_7
+  - first:
+      213: -6789604004624379387
+    second: mos_8
+  - first:
+      213: -4973445109709972364
+    second: mos_9
+  - first:
+      213: -5732548126707821854
+    second: mos_10
+  - first:
+      213: 8033182726078795162
+    second: mos_11
+  - first:
+      213: -1520993618170906138
+    second: mos_12
+  - first:
+      213: 7748037270832502852
+    second: mos_13
+  - first:
+      213: 1324895069007057663
+    second: mos_14
+  - first:
+      213: 4202872458368993410
+    second: mos_15
+  - first:
+      213: -5972946165447258716
+    second: mos_16
+  - first:
+      213: -2545922842253616496
+    second: mos_17
+  - first:
+      213: -4960501842966616767
+    second: mos_18
+  - first:
+      213: -7317322012126149414
+    second: mos_19
+  - first:
+      213: -217329092772101411
+    second: mos_20
+  - first:
+      213: 6843001584059436899
+    second: mos_21
+  - first:
+      213: -1644859923806976488
+    second: mos_22
+  - first:
+      213: 4251682304715201559
+    second: mos_23
+  - first:
+      213: 1431179648544298496
+    second: mos_24
+  - first:
+      213: 2372075576396328492
+    second: mos_25
+  - first:
+      213: 691449138753813618
+    second: mos_26
+  - first:
+      213: 7115901952679017094
+    second: mos_27
+  - first:
+      213: 2824472087876856840
+    second: mos_28
+  - first:
+      213: 6727662270884673240
+    second: mos_29
+  - first:
+      213: -2132392162593713056
+    second: mos_30
+  - first:
+      213: 8798716327186549422
+    second: mos_31
+  - first:
+      213: 1551733117662215229
+    second: mos_32
+  - first:
+      213: -1843975111010858319
+    second: mos_33
+  - first:
+      213: -5882994579033155279
+    second: mos_34
+  - first:
+      213: 3118849950447851109
+    second: mos_35
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 500
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationMethod: 0
+  spriteTessellationDetail: -1
+  spriteGeometrySubdivision: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: mos_0
+      rect:
+        serializedVersion: 2
+        x: 53
+        y: 0
+        width: 820
+        height: 849
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d12b04ec5219e32d0800000000000000
+      internalID: -3297038285628460515
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mos_1
+      rect:
+        serializedVersion: 2
+        x: 906
+        y: 0
+        width: 820
+        height: 849
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 939f6ec447bb6f990800000000000000
+      internalID: -7352483233454950087
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 94cc7de72c4ad104ea8e8c9e48bed5b2
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      mos_0: -3297038285628460515
+      mos_1: -7352483233454950087
+      mos_10: -5732548126707821854
+      mos_11: 8033182726078795162
+      mos_12: -1520993618170906138
+      mos_13: 7748037270832502852
+      mos_14: 1324895069007057663
+      mos_15: 4202872458368993410
+      mos_16: -5972946165447258716
+      mos_17: -2545922842253616496
+      mos_18: -4960501842966616767
+      mos_19: -7317322012126149414
+      mos_2: -3622670622049981589
+      mos_20: -217329092772101411
+      mos_21: 6843001584059436899
+      mos_22: -1644859923806976488
+      mos_23: 4251682304715201559
+      mos_24: 1431179648544298496
+      mos_25: 2372075576396328492
+      mos_26: 691449138753813618
+      mos_27: 7115901952679017094
+      mos_28: 2824472087876856840
+      mos_29: 6727662270884673240
+      mos_3: -6398523259655593042
+      mos_30: -2132392162593713056
+      mos_31: 8798716327186549422
+      mos_32: 1551733117662215229
+      mos_33: -1843975111010858319
+      mos_34: -5882994579033155279
+      mos_35: 3118849950447851109
+      mos_4: 2552216271762499101
+      mos_5: -5121639416063288662
+      mos_6: -5973020489884872109
+      mos_7: 7614033307698000070
+      mos_8: -6789604004624379387
+      mos_9: -4973445109709972364
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

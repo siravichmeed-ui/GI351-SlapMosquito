@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 1893303292754881354}
   - component: {fileID: 7996219263350362858}
   - component: {fileID: 5343027431124298774}
+  - component: {fileID: 3213268332833436495}
   m_Layer: 0
   m_Name: Mosquito
   m_TagString: enemy
@@ -83,7 +84,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 1
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 4959550669393256474, guid: 8c4f9197f7aba984e861f7d27c6bd6dd, type: 3}
+  m_Sprite: {fileID: -3297038285628460515, guid: c20130ad6a082fe4db1d02dee5db765b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -132,7 +133,7 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1.57, y: 1.58}
+    oldSize: {x: 1.64, y: 1.698}
     newSize: {x: 1.57, y: 1.58}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
@@ -156,8 +157,12 @@ MonoBehaviour:
   flySpeed: 3
   wobbleAmount: 0.5
   wobbleSpeed: 3
+  deadAnimationDuration: 0.5
+  isSpecial: 0
+  specialColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  specialScale: 1.3
   canPierce: 1
-  pierceChance: 0.119
+  pierceChance: 1
   minFlyTimeBeforePierce: 2
   pierceCooldown: 6
   pierceDuration: 3
@@ -169,3 +174,25 @@ MonoBehaviour:
   warningScale: 0.6
   pulseSpeed: 8
   pulseAmount: 0.15
+--- !u!95 &3213268332833436495
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2698664700555414104}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 167180e7eac684b45a2f39a01eb5cc6f, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
