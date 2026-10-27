@@ -1,4 +1,3 @@
-
 using UnityEngine;
 
 public class MosquitoSpawner : MonoBehaviour
@@ -27,7 +26,10 @@ public class MosquitoSpawner : MonoBehaviour
             return;
         }
 
-        SpawnMosquito();
+        // ถ้าเริ่มเกมมาแล้วบอสอยู่ ก็ไม่ต้องเสก
+        if (!BossSpawner.SpawningPaused)
+            SpawnMosquito();
+
         spawnTimer = spawnInterval;
     }
 
@@ -35,6 +37,14 @@ public class MosquitoSpawner : MonoBehaviour
     {
         if (mosquitoPrefab == null)
             return;
+
+        // ระหว่างสู้บอส หยุดเสกยุงทั้งหมด
+        // รีเซ็ตเวลาไว้ด้วย เพื่อให้มีช่วงพักหลังบอสตายก่อนยุงเริ่มเกิดใหม่
+        if (BossSpawner.SpawningPaused)
+        {
+            spawnTimer = spawnInterval;
+            return;
+        }
 
         spawnTimer -= Time.deltaTime;
 

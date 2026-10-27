@@ -40,6 +40,25 @@ public class BreakableGlass : MonoBehaviour
     [Header("Break")]
     public bool destroyOnBreak = true;
 
+    [Header("Shards - Break (กระจกแตก)")]
+    public bool spawnShardsOnBreak = true;
+    [Min(1)] public int breakShardCount = 40;
+    public Vector2 breakShardSize = new Vector2(0.12f, 0.35f);
+    public Vector2 breakShardSpeed = new Vector2(0.5f, 3.5f);
+    public Vector2 breakShardLifetime = new Vector2(1.0f, 1.8f);
+    public float breakShardGravity = 14f;
+
+    [Header("Shards - Hit (ตอนคลิกเป็นรอย)")]
+    public bool spawnShardsOnHit = true;
+    public Vector2Int hitShardCount = new Vector2Int(3, 6);
+    public Vector2 hitShardSize = new Vector2(0.04f, 0.1f);
+    public Vector2 hitShardSpeed = new Vector2(0.3f, 1.5f);
+    public Vector2 hitShardLifetime = new Vector2(0.6f, 1.1f);
+    public float hitShardGravity = 10f;
+
+    [Header("Shards - Common")]
+    public Color shardColor = new Color(0.85f, 0.95f, 1f, 0.85f);
+
     [Header("Depth")]
     public bool setGlassDepth = true;
     public float glassZ = 1f;
@@ -73,6 +92,7 @@ public class BreakableGlass : MonoBehaviour
     public bool IsBroken => isBroken;
 
     private static Sprite[] defaultCracks;
+    private static Sprite shardSprite;
 
     private void Awake()
     {
@@ -303,6 +323,10 @@ public class BreakableGlass : MonoBehaviour
         if (spawnCrackOnHit)
             SpawnCrackDecal(worldPoint);
 
+        // เศษเล็กๆ ร่วงตอนโดนตี
+        if (spawnShardsOnHit)
+            SpawnHitShards(worldPoint);
+
         UpdateCrack();
 
         onHit?.Invoke();
@@ -527,6 +551,178 @@ public class BreakableGlass : MonoBehaviour
         decals.Clear();
     }
 
+    // ---------------------------------------------------------
+    // Glass Shards (เศษกระจก)
+    // ---------------------------------------------------------
+
+    private static Sprite GetShardSprite()
+    {
+        if (shardSprite != null)
+            return shardSprite;
+
+        const int size = 32;
+
+        Texture2D tex = new Texture2D(
+            size,
+            size,
+            TextureFormat.RGBA32,
+            false
+        );
+
+        tex.filterMode = FilterMode.Bilinear;
+
+        Color32[] px = new Color32[size * size];
+        Color32 white = new Color32(255, 255, 255, 255);
+
+        // สามเหลี่ยมปลายแหลมชี้ขึ้น
+        for (int y = 0; y < size; y++)
+        {
+            float halfWidth = (1f - y / (size - 1f)) * size * 0.5f;
+
+            for (int x = 0; x < size; x++)
+            {
+                if (Mathf.Abs(x - (size - 1) * 0.5f) <= halfWidth)
+                    px[y * size + x] = white;
+            }
+        }
+
+        tex.SetPixels32(px);
+        tex.Apply();
+
+        shardSprite = Sprite.Create(
+            tex,
+            new Rect(0, 0, size, size),
+            new Vector2(0.5f, 0.5f),
+            size
+        );
+
+        return shardSprite;
+    }
+
+    private void SpawnShard(
+        Vector3 pos,
+        Vector2 velocity,
+        Vector2 sizeRange,
+        Vector2 lifeRange,
+        float gravity)
+    {
+        GameObject go = new GameObject("GlassShard");
+
+        // ไม่ผูกเป็นลูกของกระจก เพราะกระจกอาจถูก Destroy
+        go.transform.position = new Vector3(
+            pos.x,
+            pos.y,
+            transform.position.z
+        );
+
+        go.transform.rotation = Quaternion.Euler(
+            0f,
+            0f,
+            Random.Range(0f, 360f)
+        );
+
+        float s = Random.Range(sizeRange.x, sizeRange.y);
+
+        go.transform.localScale = new Vector3(
+            s * Random.Range(0.6f, 1.2f),
+            s * Random.Range(0.8f, 1.6f),
+            1f
+        );
+
+        SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+        sr.sprite = GetShardSprite();
+
+        Color c = shardColor;
+        float tint = Random.Range(0.85f, 1f); // สีแต่ละชิ้นไม่เหมือนกันเป๊ะ
+        c.r *= tint;
+        c.g *= tint;
+        c.b *= tint;
+        sr.color = c;
+
+        sr.sortingLayerID = glassRenderer.sortingLayerID;
+        sr.sortingOrder =
+            glassRenderer.sortingOrder + decalSortingOffset + 1;
+
+        GlassShard shard = go.AddComponent<GlassShard>();
+        shard.Init(
+            velocity,
+            Random.Range(-540f, 540f),
+            gravity,
+            Random.Range(lifeRange.x, lifeRange.y)
+        );
+    }
+
+    // เศษเล็กๆ ร่วงตอนคลิกโดน
+    private void SpawnHitShards(Vector3 worldPoint)
+    {
+        int count = Random.Range(
+            hitShardCount.x,
+            hitShardCount.y + 1
+        );
+
+        for (int i = 0; i < count; i++)
+        {
+            Vector2 offset = Random.insideUnitCircle * 0.15f;
+
+            // กระเด็นออกมานิดหน่อย แล้วร่วงลง
+            Vector2 vel = new Vector2(
+                Random.Range(-1f, 1f),
+                Random.Range(0f, 1f)
+            ).normalized * Random.Range(
+                hitShardSpeed.x,
+                hitShardSpeed.y
+            );
+
+            SpawnShard(
+                worldPoint + (Vector3)offset,
+                vel,
+                hitShardSize,
+                hitShardLifetime,
+                hitShardGravity
+            );
+        }
+    }
+
+    // กระจกแตกเป็นเศษทั้งบาน
+    private void SpawnBreakShards()
+    {
+        Bounds b = glassRenderer.bounds;
+
+        for (int i = 0; i < breakShardCount; i++)
+        {
+            Vector3 pos = new Vector3(
+                Random.Range(b.min.x, b.max.x),
+                Random.Range(b.min.y, b.max.y),
+                transform.position.z
+            );
+
+            // กระเด็นออกจากกลางบานเล็กน้อย แล้วร่วงลงตามแรงโน้มถ่วง
+            Vector2 dir = ((Vector2)(pos - b.center)).normalized;
+
+            if (dir == Vector2.zero)
+                dir = Random.insideUnitCircle.normalized;
+
+            Vector2 vel = dir * Random.Range(
+                breakShardSpeed.x,
+                breakShardSpeed.y
+            );
+
+            vel.y += Random.Range(0f, 1.5f);
+
+            SpawnShard(
+                pos,
+                vel,
+                breakShardSize,
+                breakShardLifetime,
+                breakShardGravity
+            );
+        }
+    }
+
+    // ---------------------------------------------------------
+    // Procedural crack decal
+    // ---------------------------------------------------------
+
     private static Sprite[] GetDefaultCracks()
     {
         if (defaultCracks != null && defaultCracks[0] != null)
@@ -718,6 +914,14 @@ public class BreakableGlass : MonoBehaviour
             RepairProgressUI.Instance.Hide();
 
         glassCollider.enabled = false;
+
+        // แตกเป็นเศษ: ซ่อนบานเดิมแล้วปล่อยเศษร่วงลงมา
+        if (spawnShardsOnBreak)
+        {
+            SpawnBreakShards();
+            ClearDecals();
+            glassRenderer.enabled = false;
+        }
 
         Debug.Log("Glass Broken!");
 

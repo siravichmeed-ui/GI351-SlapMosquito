@@ -44,6 +44,12 @@ public class Mosquito : MonoBehaviour
     public int maxPiercingAtOnce = 1;
     public bool dieAfterPierce = false;
 
+    [Tooltip("หลังมียุงเจาะเสร็จหรือถูกตี ยุงตัวอื่นต้องรอกี่วินาทีถึงจะเจาะได้ (กันยุงตัวใหม่โผล่มาเจาะต่อทันที)")]
+    public float globalPierceCooldown = 4f;
+
+    [Tooltip("เจาะได้เฉพาะตอนยุงอยู่ในจอ")]
+    public bool onlyPierceWhenOnScreen = true;
+
     [Header("Warning Overlay")]
     public GameObject warningPrefab;
     public Vector3 warningOffset = new Vector3(0f, 0.8f, 0f);
@@ -68,11 +74,17 @@ public class Mosquito : MonoBehaviour
     private BreakableGlass pierceTarget;
 
     private static int activePiercers;
+    private static float nextGlobalPierceTime;
+
+    // ส่งสัญญาณทุกครั้งที่ยุงถูกตี (BossSpawner ใช้นับจำนวนที่ฆ่า)
+    public static event System.Action OnMosquitoKilled;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetStatics()
     {
         activePiercers = 0;
+        nextGlobalPierceTime = 0f;
+        OnMosquitoKilled = null;
     }
 
     private void Awake()
@@ -172,6 +184,13 @@ public class Mosquito : MonoBehaviour
             return false;
         }
 
+        // คูลดาวน์รวม: เพิ่งมียุงเจาะเสร็จ/ถูกตี ยังห้ามตัวอื่นเจาะต่อทันที
+        if (Time.time < nextGlobalPierceTime)
+            return false;
+
+        if (onlyPierceWhenOnScreen && !IsOnScreen())
+            return false;
+
         if (activePiercers >= maxPiercingAtOnce)
             return false;
 
@@ -185,6 +204,19 @@ public class Mosquito : MonoBehaviour
 
         StartPierce(glass);
         return true;
+    }
+
+    private bool IsOnScreen()
+    {
+        Camera cam = Camera.main;
+
+        if (cam == null)
+            return true;
+
+        Vector3 v = cam.WorldToViewportPoint(transform.position);
+
+        return v.x > 0f && v.x < 1f &&
+               v.y > 0f && v.y < 1f;
     }
 
     private void StartPierce(BreakableGlass target)
@@ -307,6 +339,9 @@ public class Mosquito : MonoBehaviour
 
         activePiercers = Mathf.Max(0, activePiercers - 1);
         countedAsPiercer = false;
+
+        // เริ่มคูลดาวน์รวม ไม่ให้ตัวอื่นเจาะต่อทันที
+        nextGlobalPierceTime = Time.time + globalPierceCooldown;
     }
 
     // ---------------- Animation ตาย ----------------
@@ -501,6 +536,9 @@ public class Mosquito : MonoBehaviour
         }
 
         alreadyHit = true;
+
+        // แจ้ง BossSpawner ว่ามียุงถูกตี
+        OnMosquitoKilled?.Invoke();
 
         // เล่น Animation ตายก่อนลบ GameObject
         PlayDeadAnimation();
