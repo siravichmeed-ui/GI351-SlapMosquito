@@ -45,6 +45,11 @@ public class SlotEventManager : MonoBehaviour
     [Header("Combo Popup")]
     [SerializeField] private GameObject comboPopupRoot;
 
+
+    [Header("Spin Sound")]
+    public AudioSource spinAudioSource;
+    public AudioClip spinSound;
+
     private bool eventRunning;
     private bool spinning;
     private bool pendingReward;
@@ -202,6 +207,12 @@ public class SlotEventManager : MonoBehaviour
         }
 
         spinning = true;
+        if (spinAudioSource != null && spinSound != null)
+        {
+            spinAudioSource.clip = spinSound;
+            spinAudioSource.loop = true;
+            spinAudioSource.Play();
+        }
 
         SetLeverEnabled(false);
 
@@ -280,8 +291,14 @@ public class SlotEventManager : MonoBehaviour
         spinning = false;
         spinCoroutine = null;
 
+        if (spinAudioSource != null && spinAudioSource.isPlaying)
+        {
+            spinAudioSource.Stop();
+        }
         if (continueButton != null)
+        {
             continueButton.gameObject.SetActive(true);
+        }
     }
 
     private IEnumerator SpinReel(

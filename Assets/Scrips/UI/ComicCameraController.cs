@@ -13,6 +13,7 @@ public class ComicCameraController : MonoBehaviour
         [Min(0f)]
         public float pause = 0.5f;
     }
+    
 
     [Header("UI")]
     [SerializeField] private GameObject mainMenu;
@@ -71,8 +72,9 @@ public class ComicCameraController : MonoBehaviour
     {
         mainMenu.SetActive(true);
         comicCutscene.SetActive(false);
-    }
 
+
+    }
     public void PlayCutscene()
     {
         if (isPlaying)

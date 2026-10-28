@@ -1,11 +1,13 @@
 ﻿using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using TMPro;
 
 public class GameOverManager : MonoBehaviour
 {
     [Header("Game Over UI")]
     public GameObject gameOverPanel;
+    public TMP_Text finalScoreText;
 
     [Header("Settings")]
     public float gameOverDelay = 2f;
@@ -26,6 +28,7 @@ public class GameOverManager : MonoBehaviour
         }
 
         Time.timeScale = 1f;
+        isGameOver = false;
     }
 
     public void TriggerGameOver()
@@ -34,7 +37,6 @@ public class GameOverManager : MonoBehaviour
             return;
 
         isGameOver = true;
-
         StartCoroutine(GameOverRoutine());
     }
 
@@ -43,28 +45,49 @@ public class GameOverManager : MonoBehaviour
         // 1. รอให้เอฟเฟกต์กระจกแตกแสดงผล
         yield return new WaitForSecondsRealtime(gameOverDelay);
 
-        // 2. หยุดระบบ Spawn ทั้งหมดที่กำหนดไว้
+        // 2. หยุดระบบ Spawn
         StopAllSpawners();
 
-        // 3. ลบยุงธรรมดาและยุงพิเศษทั้งหมด
+        // 3. ลบยุงทั้งหมด
         ClearAllMosquitoes();
 
         // 4. ลบบอสยุงทั้งหมด
         ClearAllBosses();
 
-        // 5. ลบวัตถุเกมเพลย์ที่กำหนด Tag ไว้
+        // 5. ลบวัตถุเกมเพลย์ตาม Tag
         ClearGameplayObjects();
 
-        // 6. แสดงหน้า Game Over
+        // 6. อัปเดตคะแนนบนหน้า Game Over
+        UpdateFinalScore();
+
+        // 7. แสดงหน้า Game Over
         if (gameOverPanel != null)
         {
             gameOverPanel.SetActive(true);
         }
 
-        // 7. หยุดเวลาในเกม
+        // 8. หยุดเวลาในเกม
         Time.timeScale = 0f;
 
         Debug.Log("GAME OVER: ลบวัตถุเกมเพลย์ทั้งหมดแล้ว");
+    }
+
+    private void UpdateFinalScore()
+    {
+        if (finalScoreText == null)
+        {
+            Debug.LogWarning("ยังไม่ได้กำหนด Final Score Text ใน Inspector");
+            return;
+        }
+
+        if (ScoreManager.Instance == null)
+        {
+            Debug.LogWarning("ไม่พบ ScoreManager.Instance");
+            finalScoreText.text = "SCORE: 0";
+            return;
+        }
+
+        finalScoreText.text = "SCORE: " + ScoreManager.Instance.totalScore;
     }
 
     private void StopAllSpawners()
@@ -84,9 +107,7 @@ public class GameOverManager : MonoBehaviour
     private void ClearAllMosquitoes()
     {
         Mosquito[] mosquitoes =
-            FindObjectsByType<Mosquito>(
-                FindObjectsSortMode.None
-            );
+            FindObjectsByType<Mosquito>(FindObjectsSortMode.None);
 
         foreach (Mosquito mosquito in mosquitoes)
         {
@@ -102,9 +123,7 @@ public class GameOverManager : MonoBehaviour
     private void ClearAllBosses()
     {
         BossMosquito[] bosses =
-            FindObjectsByType<BossMosquito>(
-                FindObjectsSortMode.None
-            );
+            FindObjectsByType<BossMosquito>(FindObjectsSortMode.None);
 
         foreach (BossMosquito boss in bosses)
         {
@@ -122,32 +141,21 @@ public class GameOverManager : MonoBehaviour
         if (string.IsNullOrEmpty(gameplayObjectTag))
             return;
 
-        // ป้องกัน Error หากยังไม่ได้สร้าง Tag
-        bool tagExists = false;
+        GameObject[] gameplayObjects;
 
-        foreach (string tag in UnityEditorTags())
+        try
         {
-            if (tag == gameplayObjectTag)
-            {
-                tagExists = true;
-                break;
-            }
+            gameplayObjects = GameObject.FindGameObjectsWithTag(gameplayObjectTag);
         }
-
-        if (!tagExists)
+        catch (UnityException)
         {
             Debug.LogWarning(
                 "ไม่พบ Tag: " + gameplayObjectTag +
-                " กรุณาสร้าง Tag ใน Unity ก่อน"
+                " กรุณาสร้าง Tag นี้ใน Unity หรือเปลี่ยนชื่อ Tag ใน Inspector"
             );
 
             return;
         }
-
-        GameObject[] gameplayObjects =
-            GameObject.FindGameObjectsWithTag(
-                gameplayObjectTag
-            );
 
         foreach (GameObject obj in gameplayObjects)
         {
@@ -156,16 +164,6 @@ public class GameOverManager : MonoBehaviour
                 Destroy(obj);
             }
         }
-    }
-
-    private string[] UnityEditorTags()
-    {
-        // Tag ที่ใช้งานได้จะถูกตรวจสอบผ่าน Unity โดยตรง
-        // ฟังก์ชันนี้จะถูกแทนที่ด้วย Tag ที่กำหนดด้านล่าง
-        return new string[]
-        {
-            "GameplayObject"
-        };
     }
 
     public void RestartGame()

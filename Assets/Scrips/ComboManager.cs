@@ -17,6 +17,8 @@ public class ComboManager : MonoBehaviour
     public float popupStayDuration = 0.5f;
 
     public int currentCombo = 0;
+    [Header("Max Combo")]
+    public int maxCombo = 0;
 
     private float comboTimer;
     private int lastMosquitoKilledFrame = -1;

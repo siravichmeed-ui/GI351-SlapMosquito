@@ -23,6 +23,12 @@ public class Mosquito : MonoBehaviour
     public float deadAnimationDuration = 0.5f;
 
     private Animator animator;
+    [Header("Hit Sound")]
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip hitSound;
+
+    [Range(0f, 1f)]
+    [SerializeField] private float hitVolume = 1f;
 
     [Header("Special Mosquito (ยุงทอง)")]
     public bool isSpecial = false;
@@ -672,6 +678,12 @@ public class Mosquito : MonoBehaviour
         }
 
         alreadyHit = true;
+        // เล่นเสียงตอนตียุง
+        if (audioSource != null && hitSound != null)
+        {
+            audioSource.PlayOneShot(hitSound, hitVolume);
+        }
+
 
         // แจ้ง BossSpawner ว่ามียุงธรรมดาถูกตี
         OnMosquitoKilled?.Invoke(this);
