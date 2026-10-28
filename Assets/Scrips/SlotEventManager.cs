@@ -29,18 +29,40 @@ public class SlotEventManager : MonoBehaviour
     public float spinInterval = 0.08f;
     public float stopDelay = 0.5f;
 
+    [Header("Win Settings")]
+    [Range(0f, 100f)]
+    [Tooltip("โอกาสชนะเป็นเปอร์เซ็นต์ เช่น 10 = 10%")]
+    public float winRate = 10f;
+
+    [Header("Reward Settings")]
+    [Min(0f)]
+    [Tooltip("ระยะเวลาที่กระจกไม่แตกหลังชนะ")]
+    public float rewardDuration = 10f;
+
+    [Header("Reward UI")]
+    public TMP_Text rewardTimerText;
+
+    [Header("Combo Popup")]
+    [SerializeField] private GameObject comboPopupRoot;
+
     private bool eventRunning;
     private bool spinning;
+    private bool pendingReward;
+    private bool rewardActive;
+
     private float previousTimeScale = 1f;
+    private float rewardEndTime;
 
     private Sprite result1;
     private Sprite result2;
     private Sprite result3;
 
     private Coroutine spinCoroutine;
+    private Coroutine rewardCoroutine;
 
     public bool IsEventRunning => eventRunning;
     public bool IsSpinning => spinning;
+    public bool IsRewardActive => rewardActive;
 
     private void Awake()
     {
@@ -61,7 +83,6 @@ public class SlotEventManager : MonoBehaviour
     {
         FindLeverController();
 
-        // เริ่มเกมโดยอนุญาตให้คลิกยุงและกระจก
         SetGameInputBlocked(false);
 
         if (slotPanel != null)
@@ -70,7 +91,24 @@ public class SlotEventManager : MonoBehaviour
         if (continueButton != null)
             continueButton.gameObject.SetActive(false);
 
+        if (rewardTimerText != null)
+            rewardTimerText.gameObject.SetActive(false);
+
         SetLeverEnabled(false);
+    }
+
+    private void Update()
+    {
+        if (!rewardActive || rewardTimerText == null)
+            return;
+
+        float remaining = Mathf.Max(
+            0f,
+            rewardEndTime - Time.unscaledTime
+        );
+
+        rewardTimerText.text =
+            "GLASS PROTECTION: " + remaining.ToString("0.0") + "s";
     }
 
     private void FindLeverController()
@@ -91,7 +129,6 @@ public class SlotEventManager : MonoBehaviour
         }
     }
 
-    // ล็อกหรือปลดล็อกการคลิกภายในเกม
     private void SetGameInputBlocked(bool blocked)
     {
         BreakableGlass.InputBlocked = blocked;
@@ -99,15 +136,21 @@ public class SlotEventManager : MonoBehaviour
 
     public void OpenEvent()
     {
-        if (eventRunning)
+        if (eventRunning || rewardActive)
             return;
 
         FindLeverController();
 
         eventRunning = true;
         spinning = false;
+        pendingReward = false;
 
-        // ล็อกการตีและคลิกวัตถุในเกมทันทีที่เปิด Slot
+        // ซ่อน Combo Popup เมื่อเข้า Slot Event
+        if (comboPopupRoot != null)
+        {
+            comboPopupRoot.SetActive(false);
+        }
+
         SetGameInputBlocked(true);
 
         previousTimeScale = Time.timeScale;
@@ -124,7 +167,7 @@ public class SlotEventManager : MonoBehaviour
 
         SetLeverEnabled(true);
 
-        Debug.Log("Slot Event เปิดแล้ว: ล็อกการตีและคลิกในเกม");
+        Debug.Log("Slot Event เปิดแล้ว");
     }
 
     public void PullLever()
@@ -140,6 +183,19 @@ public class SlotEventManager : MonoBehaviour
 
             if (resultText != null)
                 resultText.text = "NO SLOT SYMBOLS!";
+
+            SetLeverEnabled(true);
+            return;
+        }
+
+        if (symbols.Length < 2)
+        {
+            Debug.LogError(
+                "SlotEventManager: ต้องมี Sprite อย่างน้อย 2 รูป"
+            );
+
+            if (resultText != null)
+                resultText.text = "NEED AT LEAST 2 SYMBOLS!";
 
             SetLeverEnabled(true);
             return;
@@ -163,12 +219,42 @@ public class SlotEventManager : MonoBehaviour
         if (resultText != null)
             resultText.text = "SPINNING...";
 
-        // สุ่มผลลัพธ์ของแต่ละช่องล่วงหน้า
-        result1 = symbols[Random.Range(0, symbols.Length)];
-        result2 = symbols[Random.Range(0, symbols.Length)];
-        result3 = symbols[Random.Range(0, symbols.Length)];
+        // สุ่มว่ารอบนี้จะชนะหรือไม่
+        bool isWin = Random.value * 100f < winRate;
 
-        // เริ่มหมุนทั้ง 3 ช่องพร้อมกัน
+        if (isWin)
+        {
+            // ชนะ: ทั้งสามช่องต้องเป็นรูปเดียวกัน
+            Sprite winningSymbol =
+                symbols[Random.Range(0, symbols.Length)];
+
+            result1 = winningSymbol;
+            result2 = winningSymbol;
+            result3 = winningSymbol;
+        }
+        else
+        {
+            // แพ้: สุ่มใหม่จนกว่าจะไม่ใช่สามรูปเดียวกัน
+            do
+            {
+                result1 = symbols[
+                    Random.Range(0, symbols.Length)
+                ];
+
+                result2 = symbols[
+                    Random.Range(0, symbols.Length)
+                ];
+
+                result3 = symbols[
+                    Random.Range(0, symbols.Length)
+                ];
+            }
+            while (
+                result1 == result2 &&
+                result2 == result3
+            );
+        }
+
         Coroutine reel1Routine = StartCoroutine(
             SpinReel(reel1, result1, spinDuration)
         );
@@ -178,15 +264,17 @@ public class SlotEventManager : MonoBehaviour
         );
 
         Coroutine reel3Routine = StartCoroutine(
-            SpinReel(reel3, result3, spinDuration + stopDelay * 2f)
+            SpinReel(
+                reel3,
+                result3,
+                spinDuration + stopDelay * 2f
+            )
         );
 
-        // รอจนกว่าทั้ง 3 ช่องจะหมุนเสร็จ
         yield return reel1Routine;
         yield return reel2Routine;
         yield return reel3Routine;
 
-        // แสดงผลเมื่อทุกช่องหยุดแล้วเท่านั้น
         ShowResult();
 
         spinning = false;
@@ -226,29 +314,35 @@ public class SlotEventManager : MonoBehaviour
             yield return null;
         }
 
-        // กำหนดภาพผลลัพธ์สุดท้าย
         reel.sprite = finalSprite;
     }
 
     private void ShowResult()
     {
-        if (resultText == null)
-            return;
+        bool isWin =
+            result1 != null &&
+            result1 == result2 &&
+            result2 == result3;
 
-        if (result1 == result2 && result2 == result3)
+        if (isWin)
         {
-            resultText.text = "JACKPOT!";
-        }
-        else if (
-            result1 == result2 ||
-            result2 == result3 ||
-            result1 == result3)
-        {
-            resultText.text = "SMALL WIN!";
+            pendingReward = true;
+
+            if (resultText != null)
+            {
+                resultText.text =
+                    "JACKPOT!\nGLASS PROTECTED FOR " +
+                    rewardDuration.ToString("0") + " SECONDS!";
+            }
+
+            Debug.Log("Slot ชนะ! ได้รับสิทธิ์ป้องกันกระจก");
         }
         else
         {
-            resultText.text = "TRY AGAIN!";
+            pendingReward = false;
+
+            if (resultText != null)
+                resultText.text = "TRY AGAIN!";
         }
     }
 
@@ -277,10 +371,64 @@ public class SlotEventManager : MonoBehaviour
         // คืนความเร็วเกม
         Time.timeScale = previousTimeScale;
 
-        // ปลดล็อกให้กลับมาตียุงและกระจกได้
+        if (pendingReward)
+        {
+            pendingReward = false;
+            ActivateReward();
+        }
+        else
+        {
+            SetGameInputBlocked(false);
+        }
+
+        Debug.Log("Slot Event จบแล้ว");
+    }
+
+    private void ActivateReward()
+    {
+        rewardActive = true;
+
+        // เปิดให้คลิกวัตถุในเกมได้
         SetGameInputBlocked(false);
 
-        Debug.Log("Slot Event จบแล้ว: ปลดล็อกการตีและคลิกในเกม");
+        // เปิดสิทธิ์ป้องกันกระจกแตก
+        BreakableGlass.GlassProtected = true;
+
+        rewardEndTime =
+            Time.unscaledTime + rewardDuration;
+
+        if (rewardTimerText != null)
+        {
+            rewardTimerText.gameObject.SetActive(true);
+        }
+
+        if (rewardCoroutine != null)
+            StopCoroutine(rewardCoroutine);
+
+        rewardCoroutine = StartCoroutine(RewardRoutine());
+
+        Debug.Log(
+            "ได้รับรางวัล: กระจกไม่แตกเป็นเวลา " +
+            rewardDuration + " วินาที"
+        );
+    }
+
+    private IEnumerator RewardRoutine()
+    {
+        // ใช้เวลาจริง แม้ Time.timeScale จะเป็น 0
+        yield return new WaitForSecondsRealtime(rewardDuration);
+
+        BreakableGlass.GlassProtected = false;
+
+        rewardActive = false;
+        rewardCoroutine = null;
+
+        if (rewardTimerText != null)
+        {
+            rewardTimerText.gameObject.SetActive(false);
+        }
+
+        Debug.Log("หมดเวลาป้องกันกระจกแล้ว");
     }
 
     private void SetLeverEnabled(bool isEnabled)
@@ -306,13 +454,15 @@ public class SlotEventManager : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (Instance == this)
-        {
-            // ป้องกันสถานะล็อกค้างหาก Manager ถูกทำลาย
-            SetGameInputBlocked(false);
+        if (Instance != this)
+            return;
 
-            Time.timeScale = previousTimeScale;
-            Instance = null;
-        }
+        // ป้องกันสถานะป้องกันกระจกค้าง
+        BreakableGlass.GlassProtected = false;
+        BreakableGlass.InputBlocked = false;
+
+        Time.timeScale = previousTimeScale;
+
+        Instance = null;
     }
 }

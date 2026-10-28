@@ -19,6 +19,7 @@ public class CrackStage
 [RequireComponent(typeof(Collider2D))]
 public class BreakableGlass : MonoBehaviour
 {
+    public static bool GlassProtected = false;
     [Header("HP")]
     [Min(1)] public int maxHP = 3;
     [Min(1)] public int damagePerClick = 1;
@@ -104,6 +105,8 @@ public class BreakableGlass : MonoBehaviour
     public int CurrentHP => currentHP;
     public bool IsBroken => isBroken;
 
+    [Header("Stop Mosquito Spawners")]
+    [SerializeField] private Behaviour[] mosquitoSpawners;
     private static Sprite[] defaultCracks;
     private static Sprite shardSprite;
 
@@ -331,6 +334,9 @@ public class BreakableGlass : MonoBehaviour
     // ดาเมจโดยระบุจุดที่โดน
     public void TakeDamage(int damage, Vector3 worldPoint)
     {
+        if (GlassProtected)
+            return;
+
         if (isBroken || damage <= 0)
             return;
 
@@ -969,7 +975,8 @@ public class BreakableGlass : MonoBehaviour
         }
 
         Debug.Log("Glass Broken!");
-
+        ClearAllMosquitoes();
+        HandleGlassBrokenCleanup();
         onBreak?.Invoke();
 
         if (destroyOnBreak)
@@ -995,5 +1002,47 @@ public class BreakableGlass : MonoBehaviour
 
         if (RepairProgressUI.Instance != null)
             RepairProgressUI.Instance.Hide();
+    }
+
+    private void StopMosquitoSpawners()
+    {
+        if (mosquitoSpawners == null)
+            return;
+
+        foreach (Behaviour spawner in mosquitoSpawners)
+        {
+            if (spawner != null)
+            {
+                spawner.enabled = false;
+            }
+        }
+
+        Debug.Log("กระจกแตก: หยุด Mosquito Spawners แล้ว");
+    }
+
+    private void ClearAllMosquitoes()
+    {
+        Mosquito[] mosquitoes =
+            FindObjectsByType<Mosquito>(FindObjectsSortMode.None);
+
+        foreach (Mosquito mosquito in mosquitoes)
+        {
+            if (mosquito == null)
+                continue;
+
+            // ไม่ลบบอสยุง
+            if (mosquito.GetComponent<BossMosquito>() != null)
+                continue;
+
+            Destroy(mosquito.gameObject);
+        }
+
+        Debug.Log("กระจกแตก: ลบยุงธรรมดาทั้งหมดแล้ว");
+    }
+
+    private void HandleGlassBrokenCleanup()
+    {
+        StopMosquitoSpawners();
+        ClearAllMosquitoes();
     }
 }

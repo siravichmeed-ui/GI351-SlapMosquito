@@ -1,8 +1,9 @@
+using System;
 using System.Collections;
-using UnityEngine;
-using UnityEngine.UI;
 using TMPro;
+using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 public class ComboManager : MonoBehaviour
 {
@@ -18,6 +19,7 @@ public class ComboManager : MonoBehaviour
     public int currentCombo = 0;
 
     private float comboTimer;
+    private int lastMosquitoKilledFrame = -1;
     private Coroutine popupCoroutine;
     private Coroutine fadeCoroutine;
 
@@ -120,6 +122,10 @@ public class ComboManager : MonoBehaviour
         if (!Input.GetMouseButtonDown(0))
             return;
 
+        // ถ้าเพิ่งตีโดนยุงในเฟรมนี้ ห้ามรีเซ็ต Combo
+        if (lastMosquitoKilledFrame == Time.frameCount)
+            return;
+
         // ไม่ตรวจจับระหว่าง Slot Event
         if (SlotEventManager.Instance != null &&
             SlotEventManager.Instance.IsEventRunning)
@@ -156,30 +162,19 @@ public class ComboManager : MonoBehaviour
 
         Collider2D[] hits = Physics2D.OverlapPointAll(worldPoint);
 
-        bool hitMosquito = false;
+       
+bool hitMosquito = false;
 
         foreach (Collider2D hit in hits)
         {
             if (hit == null)
                 continue;
 
-            // ตรวจ Layer หากกำหนด LayerMask ไว้
-            if (mosquitoLayer.value != 0 &&
-                (mosquitoLayer.value & (1 << hit.gameObject.layer)) == 0)
-            {
-                continue;
-            }
-
+            // ตรวจสอบ Object หลักก่อน โดยไม่กรอง Layer ของ Collider ลูก
             Mosquito mosquito = hit.GetComponentInParent<Mosquito>();
             BossMosquito boss = hit.GetComponentInParent<BossMosquito>();
 
-            if (boss != null)
-            {
-                hitMosquito = true;
-                break;
-            }
-
-            if (mosquito != null)
+            if (mosquito != null || boss != null)
             {
                 hitMosquito = true;
                 break;
@@ -187,7 +182,10 @@ public class ComboManager : MonoBehaviour
         }
 
         if (!hitMosquito && currentCombo > 0)
+        {
             ResetCombo();
+        }
+
     }
 
     // รับ Event เมื่อยุงถูกตีสำเร็จ
@@ -195,7 +193,7 @@ public class ComboManager : MonoBehaviour
     {
         if (mosquito == null)
             return;
-
+        lastMosquitoKilledFrame = Time.frameCount;
         if (SlotEventManager.Instance != null &&
             SlotEventManager.Instance.IsEventRunning)
         {
