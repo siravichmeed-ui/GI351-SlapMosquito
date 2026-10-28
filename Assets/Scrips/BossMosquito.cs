@@ -73,6 +73,7 @@ public class BossMosquito : MonoBehaviour
     public float wobbleAmount = 0.15f;
     public float wobbleSpeed = 3f;
 
+   
     private float randomOffset;
     private readonly List<Mosquito> minions = new List<Mosquito>();
 
@@ -82,6 +83,7 @@ public class BossMosquito : MonoBehaviour
     public int CurrentHP => currentHP;
     public int MaxHP => s != null ? s.maxHP : 0;
     public bool IsDead => isDead;
+    private bool isEscaping;
 
     public void Init(BossSettings settings, GameObject minionPrefab)
     {
@@ -121,6 +123,10 @@ public class BossMosquito : MonoBehaviour
     private void Update()
     {
         if (isDead || s == null)
+            return;
+
+        // ถ้ากำลังหนี ให้ออกจากระบบบินปกติ
+        if (isEscaping)
             return;
 
         Fly();
@@ -455,5 +461,90 @@ public class BossMosquito : MonoBehaviour
                 return;
             }
         }
+    }
+    // ---------------- Escape ----------------
+
+    public void EscapeAndGameOver(GameOverManager gameOverManager)
+    {
+        if (isEscaping || isDead)
+            return;
+
+        isEscaping = true;
+
+        // ป้องกันไม่ให้ผู้เล่นคลิกโจมตีบอสได้อีก
+        if (col != null)
+            col.enabled = false;
+
+        // หยุดการเรียกลูกน้อง
+        StopAllCoroutines();
+
+        // หยุดการทำงานของลูกน้องที่ยังเหลืออยู่
+        foreach (Mosquito m in minions)
+        {
+            if (m != null)
+                Destroy(m.gameObject);
+        }
+
+        minions.Clear();
+
+        StartCoroutine(EscapeRoutine(gameOverManager));
+    }
+
+    private IEnumerator EscapeRoutine(GameOverManager gameOverManager)
+    {
+        Camera cam = Camera.main;
+
+        Vector3 escapeTarget;
+
+        if (cam != null)
+        {
+            float distance = Mathf.Abs(
+                cam.transform.position.z - transform.position.z
+            );
+
+            // จุดหมายอยู่นอกขอบขวาของกล้อง
+            escapeTarget = cam.ViewportToWorldPoint(
+                new Vector3(1.3f, 0.8f, distance)
+            );
+
+            escapeTarget.z = transform.position.z;
+        }
+        else
+        {
+            escapeTarget = transform.position + Vector3.right * 30f;
+        }
+
+        // หันหน้าไปทางที่กำลังหนี
+        transform.localScale = new Vector3(
+            -Mathf.Abs(transform.localScale.x),
+            transform.localScale.y,
+            transform.localScale.z
+        );
+
+        // บินออกนอกจอ
+        while (Vector3.Distance(transform.position, escapeTarget) > 0.05f)
+        {
+            transform.position = Vector3.MoveTowards(
+                transform.position,
+                escapeTarget,
+                s.flySpeed * 4f * Time.deltaTime
+            );
+
+            yield return null;
+        }
+
+        // ยุงหนีออกไปสำเร็จแล้ว
+        if (gameOverManager != null)
+        {
+            gameOverManager.TriggerGameOver();
+        }
+        else
+        {
+            Debug.LogError(
+                "BossMosquito: ไม่ได้กำหนด GameOverManager"
+            );
+        }
+
+        Destroy(gameObject);
     }
 }

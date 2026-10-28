@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 using Random = UnityEngine.Random;
@@ -27,6 +28,9 @@ public class BossSpawner : MonoBehaviour
     [Header("Boss Camera")]
     public BossCameraFocus bossCamera;
 
+    [Header("Game Over")]
+    public GameOverManager gameOverManager;
+
     [Header("Spawner Control")]
     public Behaviour[] spawnersToPause;
     public bool clearMosquitoesOnBossSpawn = true;
@@ -38,8 +42,10 @@ public class BossSpawner : MonoBehaviour
     private int killCount;
     private int currentKillTarget;
     private BossMosquito currentBoss;
+
     private bool bossActive;
     private bool finished;
+    private bool escapeStarted;
 
     public int KillCount => killCount;
     public int CurrentKillTarget => currentKillTarget;
@@ -64,10 +70,16 @@ public class BossSpawner : MonoBehaviour
         );
 
         minBossHP = Mathf.Max(1, minBossHP);
-        maxBossHP = Mathf.Max(minBossHP, maxBossHP);
+
+        maxBossHP = Mathf.Max(
+            minBossHP,
+            maxBossHP
+        );
 
         if (bossCamera == null && Camera.main != null)
+        {
             bossCamera = Camera.main.GetComponent<BossCameraFocus>();
+        }
 
         ChooseNextKillTarget();
     }
@@ -118,7 +130,7 @@ public class BossSpawner : MonoBehaviour
 
     private void HandleMosquitoKilled(Mosquito mosquito)
     {
-        if (bossActive || finished)
+        if (bossActive || finished || escapeStarted)
             return;
 
         killCount++;
@@ -133,22 +145,26 @@ public class BossSpawner : MonoBehaviour
 
     public void SpawnBoss()
     {
-        if (bossActive || finished)
+        if (bossActive || finished || escapeStarted)
             return;
 
         if (mosquitoPrefab == null)
         {
-            Debug.LogError("BossSpawner: กรุณาใส่ Mosquito Prefab", this);
+            Debug.LogError(
+                "BossSpawner: กรุณาใส่ Mosquito Prefab",
+                this
+            );
+
             return;
         }
 
-        // สุ่ม HP ใหม่ทุกครั้งที่เรียกบอส
         int randomBossHP = Random.Range(
             minBossHP,
             maxBossHP + 1
         );
 
         Vector3 spawnPosition = mosquitoPrefab.transform.position;
+
         Camera cam = Camera.main;
 
         if (cam != null)
@@ -169,15 +185,14 @@ public class BossSpawner : MonoBehaviour
             spawnPosition.z = mosquitoPrefab.transform.position.z;
         }
 
-        // หยุดระบบสร้างยุงธรรมดา
         SetSpawnersPaused(true);
 
-        // ลบยุงธรรมดาที่เหลืออยู่ก่อนสร้างบอส
         if (clearMosquitoesOnBossSpawn)
         {
-            Mosquito[] mosquitoes = FindObjectsByType<Mosquito>(
-                FindObjectsSortMode.None
-            );
+            Mosquito[] mosquitoes =
+                FindObjectsByType<Mosquito>(
+                    FindObjectsSortMode.None
+                );
 
             foreach (Mosquito mosquito in mosquitoes)
             {
@@ -186,34 +201,30 @@ public class BossSpawner : MonoBehaviour
             }
         }
 
-        // ใช้ Prefab ยุงตัวเดิม
         GameObject bossObject = Instantiate(
             mosquitoPrefab,
             spawnPosition,
             Quaternion.identity
         );
 
-        // ปิดระบบยุงธรรมดาบนตัวบอส
-        Mosquito normalMosquito = bossObject.GetComponent<Mosquito>();
+        Mosquito normalMosquito =
+            bossObject.GetComponent<Mosquito>();
 
         if (normalMosquito != null)
             normalMosquito.enabled = false;
 
-        // เพิ่มหรือดึงระบบบอส
-        BossMosquito boss = bossObject.GetComponent<BossMosquito>();
+        BossMosquito boss =
+            bossObject.GetComponent<BossMosquito>();
 
         if (boss == null)
             boss = bossObject.AddComponent<BossMosquito>();
 
-        // ส่ง HP ที่สุ่มได้เข้าไป
-        // ตั้งค่าบอส
         BossSettings settings = new BossSettings();
 
         settings.maxHP = randomBossHP;
         settings.scaleMultiplier = bossScaleMultiplier;
         settings.flySpeed = bossFlySpeed;
 
-        // ส่งค่าตั้งค่าเข้าไปในบอส
         boss.Init(settings, null);
 
         boss.Defeated += HandleBossDefeated;
@@ -255,6 +266,48 @@ public class BossSpawner : MonoBehaviour
         Debug.Log("บอสถูกกำจัดแล้ว!");
     }
 
+    // เรียกจาก BreakableGlass เมื่อกระจกแตก
+    public void HandleGlassBroken()
+    {
+        if (escapeStarted)
+            return;
+
+        if (currentBoss == null)
+        {
+            Debug.LogWarning(
+                "BossSpawner: กระจกแตก แต่ไม่พบบอสยุงที่กำลังทำงานอยู่"
+            );
+
+            return;
+        }
+
+        escapeStarted = true;
+        finished = true;
+        MakeNormalMosquitoesEscape();
+        // หยุดระบบสร้างยุงทันที
+        SetSpawnersPaused(true);
+
+        // ยกเลิกการโฟกัสกล้องที่อาจขัดขวางการหนี
+        if (bossCamera != null)
+            bossCamera.RestoreView();
+
+        // สั่งให้บอสบินหนี แล้วให้ GameOverManager
+        // แสดงหน้า Game Over หลังจากบินออกนอกจอสำเร็จ
+        if (gameOverManager == null)
+        {
+            Debug.LogError(
+                "BossSpawner: กรุณากำหนด GameOverManager ใน Inspector",
+                this
+            );
+
+            return;
+        }
+
+        currentBoss.EscapeAndGameOver(gameOverManager);
+
+        Debug.Log("กระจกแตก! บอสยุงกำลังหนีออกจากฉาก");
+    }
+
     private void SetSpawnersPaused(bool paused)
     {
         SpawningPaused = paused;
@@ -267,5 +320,90 @@ public class BossSpawner : MonoBehaviour
             if (spawner != null)
                 spawner.enabled = !paused;
         }
+    }
+    // ให้ยุงธรรมดาทุกตัวบินออกนอกจอ
+    private void MakeNormalMosquitoesEscape()
+    {
+        Mosquito[] mosquitoes = FindObjectsByType<Mosquito>(
+            FindObjectsSortMode.None
+        );
+
+        Camera cam = Camera.main;
+
+        if (cam == null)
+            return;
+
+        foreach (Mosquito mosquito in mosquitoes)
+        {
+            if (mosquito == null)
+                continue;
+
+            // ไม่ให้ระบบนี้ควบคุมบอส
+            if (currentBoss != null &&
+                mosquito.gameObject == currentBoss.gameObject)
+            {
+                continue;
+            }
+
+            StartCoroutine(EscapeNormalMosquito(mosquito, cam));
+        }
+    }
+
+    private IEnumerator EscapeNormalMosquito(
+        Mosquito mosquito,
+        Camera cam)
+    {
+        if (mosquito == null)
+            yield break;
+
+        Transform mosquitoTransform = mosquito.transform;
+
+        // หยุดระบบของยุงและปิด Collider
+        MonoBehaviour[] scripts =
+            mosquito.GetComponents<MonoBehaviour>();
+
+        foreach (MonoBehaviour script in scripts)
+        {
+            if (script != null)
+                script.enabled = false;
+        }
+
+        Collider2D[] colliders =
+            mosquito.GetComponentsInChildren<Collider2D>();
+
+        foreach (Collider2D col in colliders)
+        {
+            if (col != null)
+                col.enabled = false;
+        }
+
+        // กำหนดเป้าหมายให้อยู่นอกขอบจอด้านขวา
+        float distance = Mathf.Abs(
+            cam.transform.position.z - mosquitoTransform.position.z
+        );
+
+        Vector3 target = cam.ViewportToWorldPoint(
+            new Vector3(1.3f, Random.Range(0.2f, 0.9f), distance)
+        );
+
+        target.z = mosquitoTransform.position.z;
+
+        // บินออกนอกจอ
+        float escapeSpeed = 8f;
+
+        while (mosquitoTransform != null &&
+               Vector3.Distance(mosquitoTransform.position, target) > 0.1f)
+        {
+            mosquitoTransform.position = Vector3.MoveTowards(
+                mosquitoTransform.position,
+                target,
+                escapeSpeed * Time.deltaTime
+            );
+
+            yield return null;
+        }
+
+        if (mosquitoTransform != null)
+            Destroy(mosquitoTransform.gameObject);
     }
 }

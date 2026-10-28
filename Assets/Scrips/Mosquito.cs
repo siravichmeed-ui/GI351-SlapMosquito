@@ -1,3 +1,4 @@
+
 using System.Collections;
 using UnityEngine;
 
@@ -463,14 +464,26 @@ public class Mosquito : MonoBehaviour
         if (state == MosquitoState.Dead)
             return;
 
+        // เปลี่ยนสถานะเป็นตายทันที ป้องกันการคลิกซ้ำ
         state = MosquitoState.Dead;
+        alreadyHit = true;
+
+        // ปิด Collider ทุกตัวบนยุงและลูกทั้งหมด
+        Collider2D[] colliders = GetComponentsInChildren<Collider2D>();
+
+        foreach (Collider2D col in colliders)
+        {
+            col.enabled = false;
+        }
 
         ReleasePiercer();
         HideWarning();
 
+        // เล่นแอนิเมชันตาย
         if (animator != null)
             animator.SetTrigger("Dead");
 
+        // รอให้แอนิเมชันจบก่อนลบยุง
         if (animator != null && deadAnimationDuration > 0f)
         {
             StartCoroutine(DestroyAfterDeadAnimation());
@@ -639,14 +652,15 @@ public class Mosquito : MonoBehaviour
         if (GetComponent<BossMosquito>() != null)
             return;
 
+        // ห้ามตีซ้ำเมื่อยุงตายแล้ว
+        if (alreadyHit || state == MosquitoState.Dead)
+            return;
+
         if (SlotEventManager.Instance != null &&
             SlotEventManager.Instance.IsEventRunning)
         {
             return;
         }
-
-        if (alreadyHit || state == MosquitoState.Dead)
-            return;
 
         if (BreakableGlass.InputBlocked)
             return;
